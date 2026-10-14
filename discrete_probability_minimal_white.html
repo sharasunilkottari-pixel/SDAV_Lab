@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discrete Probability Distributions · AIML Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ============ TOKYO NIGHT PALETTE ============ */
+  :root {
+    /* Base */
+    --bg-deep:    #16161e;   /* darkest */
+    --bg:         #1a1b26;   /* main background */
+    --bg-soft:    #1f2335;   /* panel */
+    --bg-hi:      #24283b;   /* elevated */
+    --bg-hi-2:    #2f334d;   /* hover */
+
+    /* Text */
+    --fg:         #c0caf5;   /* primary text */
+    --fg-dim:     #a9b1d6;   /* secondary */
+    --fg-muted:   #565f89;   /* muted */
+    --fg-faint:   #414868;   /* faint */
+
+    /* Accents (Tokyo Night) */
+    --blue:       #7aa2f7;
+    --cyan:       #7dcfff;
+    --purple:     #bb9af7;
+    --magenta:    #ff007c;
+    --pink:       #f7768e;
+    --red:        #ff7a93;
+    --orange:     #ff9e64;
+    --yellow:     #e0af68;
+    --green:      #9ece6a;
+    --teal:       #73daca;
+
+    /* Semantic */
+    --success:    #9ece6a;
+    --error:      #f7768e;
+
+    --line:       #2f334d;
+    --line-soft:  #232842;
+    --line-glow:  #3d59a1;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Ambient star-like background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(122, 162, 247, 0.10), transparent 40%),
+      radial-gradient(circle at 88% 12%, rgba(187, 154, 247, 0.10), transparent 40%),
+      radial-gradient(circle at 50% 95%, rgba(125, 207, 255, 0.08), transparent 45%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Tiny twinkling dots */
+  .stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    border-radius: 50%;
+    background: var(--cyan);
+    opacity: 0.4;
+    animation: twinkle linear infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.8); }
+    50%      { opacity: 0.9;  transform: scale(1.2); }
+  }
+
+  /* ============ APP SHELL ============ */
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1160px;
+    margin: 0 auto;
+    background: var(--bg-soft);
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(122, 162, 247, 0.06),
+      inset 0 1px 0 rgba(192, 202, 245, 0.05);
+    padding: 2rem 2.2rem 3rem;
+    overflow: hidden;
+  }
+
+  /* Top neon accent bar */
+  .app::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      var(--magenta), var(--purple), var(--blue), var(--cyan), var(--teal), var(--green));
+    background-size: 200% 100%;
+    animation: shift 8s linear infinite;
+  }
+  @keyframes shift {
+    from { background-position: 0% 50%; }
+    to   { background-position: 200% 50%; }
+  }
+
+  /* ============ HEADER ============ */
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .app-title h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+  }
+  .app-title .sub {
+    font-size: 0.78rem;
+    color: var(--fg-muted);
+    margin-top: 0.4rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .app-title .sub::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--green); }
+    50%      { opacity: 0.5; box-shadow: 0 0 4px var(--green); }
+  }
+
+  /* ============ NAV ============ */
+  nav {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    padding: 0.35rem;
+    background: var(--bg-deep);
+    border-radius: 14px;
+    border: 1px solid var(--line);
+  }
+  nav a {
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.6rem 1.15rem;
+    border-radius: 10px;
+    color: var(--fg-dim);
+    background: transparent;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+  }
+  nav a:hover {
+    color: var(--fg);
+    background: var(--bg-hi);
+  }
+  nav a.active {
+    color: var(--bg-deep);
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    box-shadow:
+      0 4px 14px rgba(122, 162, 247, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    font-weight: 700;
+  }
+
+  /* ============ PAGE ============ */
+  .content { min-height: 400px; }
+  .page { animation: fadeSlide 0.4s ease; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ PANEL HEADER ============ */
+  .panel-header { margin-bottom: 1.5rem; }
+  .panel-header h2 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .panel-header h2::before {
+    content: '';
+    width: 4px;
+    height: 26px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--cyan), var(--purple));
+    box-shadow: 0 0 12px rgba(125, 207, 255, 0.5);
+  }
+  .panel-header p {
+    color: var(--fg-dim);
+    font-size: 0.95rem;
+    margin-top: 0.4rem;
+    max-width: 720px;
+  }
+
+  /* ============ TEACHING CARDS ============ */
+  .teach-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.8rem;
+  }
+  @media (max-width: 760px) { .teach-grid { grid-template-columns: 1fr; } }
+
+  .teach-card {
+    background: linear-gradient(135deg, rgba(122, 162, 247, 0.08), rgba(187, 154, 247, 0.05));
+    border: 1px solid rgba(122, 162, 247, 0.25);
+    border-radius: 18px;
+    padding: 1.3rem 1.5rem;
+    position: relative;
+  }
+  .teach-card.what::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20px; bottom: 20px;
+    width: 3px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--cyan), var(--blue));
+    box-shadow: 0 0 12px rgba(125, 207, 255, 0.6);
+  }
+  .teach-card.how {
+    background: linear-gradient(135deg, rgba(158, 206, 106, 0.08), rgba(115, 218, 202, 0.05));
+    border-color: rgba(158, 206, 106, 0.28);
+  }
+  .teach-card.how::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20px; bottom: 20px;
+    width: 3px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--green), var(--teal));
+    box-shadow: 0 0 12px rgba(158, 206, 106, 0.6);
+  }
+  .teach-card h4 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .teach-card.how h4 { color: var(--green); }
+  .teach-card h4 .emoji { font-size: 1rem; }
+  .teach-card p {
+    color: var(--fg);
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+  .teach-card p em { color: var(--cyan); font-style: normal; font-weight: 600; }
+  .teach-card p strong { color: var(--fg); font-weight: 700; }
+  .teach-card ol, .teach-card ul {
+    padding-left: 1.2rem;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+  .teach-card ol li::marker { color: var(--green); font-weight: 700; }
+  .teach-card ol li strong, .teach-card ul li strong { color: var(--fg); }
+
+  /* ============ INTRO BOX (formula) ============ */
+  .intro-box {
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.3rem 1.5rem;
+    margin-bottom: 1.8rem;
+  }
+  .intro-box .formula {
+    background: var(--bg-hi);
+    border-radius: 12px;
+    padding: 0.75rem 1.2rem;
+    margin: 0.4rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--fg);
+    border: 1px solid var(--line-glow);
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .intro-box .formula .highlight {
+    color: var(--bg-deep);
+    font-weight: 700;
+    background: var(--cyan);
+    padding: 0.1rem 0.5rem;
+    border-radius: 6px;
+  }
+  .intro-box .formula-meaning {
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    margin-top: 0.6rem;
+    font-style: italic;
+  }
+
+  /* ============ INPUT GRID ============ */
+  .input-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+    align-items: flex-end;
+    margin-bottom: 1.8rem;
+    background: var(--bg-deep);
+    padding: 1.5rem 1.7rem;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+  }
+  .input-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 180px;
+  }
+  .input-item label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--fg-muted);
+  }
+  .input-item label .hint {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+    color: var(--fg-faint);
+    font-size: 0.85em;
+    margin-left: 0.35rem;
+  }
+  .input-item input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.75rem 1.05rem;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg-hi);
+    color: var(--fg);
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+  .input-item input:hover { border-color: var(--line-glow); }
+  .input-item input:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.15);
+    background: var(--bg-hi-2);
+  }
+  .validation-message {
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    color: var(--error);
+    font-weight: 500;
+    min-height: 1.1rem;
+  }
+  .input-actions { display: flex; gap: 0.8rem; align-items: center; }
+
+  /* ============ BUTTONS ============ */
+  .btn {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 0.78rem 1.7rem;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    color: var(--bg-deep);
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    transition: all 0.25s ease;
+    box-shadow:
+      0 4px 16px rgba(125, 207, 255, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.01em;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 22px rgba(125, 207, 255, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    filter: brightness(1.08);
+  }
+  .btn:active { transform: translateY(0); }
+
+  /* ============ SELECTED VALUES ============ */
+  .selected-values {
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.2rem 1.6rem;
+    margin-bottom: 1.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+  }
+  .selected-values .value-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+  }
+  .selected-values .value-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--fg-muted);
+  }
+  .selected-values .value-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--cyan);
+    text-shadow: 0 0 16px rgba(125, 207, 255, 0.35);
+  }
+
+  /* ============ STAT CARDS ============ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.8rem;
+  }
+  .stat-card {
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.2rem 1.35rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--line-glow);
+    box-shadow: 0 10px 24px rgba(122, 162, 247, 0.15);
+  }
+  .stat-card:hover::after { transform: scaleX(1); }
+  .stat-card .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-weight: 700;
+    color: var(--fg-muted);
+    margin-bottom: 0.4rem;
+  }
+  .stat-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--fg);
+    line-height: 1.2;
+    word-break: break-word;
+    letter-spacing: -0.01em;
+  }
+  .stat-card .formula-hint {
+    font-size: 0.7rem;
+    color: var(--fg-faint);
+    margin-top: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.12rem 0.45rem;
+    background: rgba(125, 207, 255, 0.08);
+    border-radius: 5px;
+    display: inline-block;
+    border: 1px solid rgba(125, 207, 255, 0.12);
+  }
+
+  /* ============ CALC SECTION ============ */
+  .calc-section {
+    margin-top: 2.2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-soft);
+  }
+  .calc-section h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--fg);
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .calc-section h3::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 0 4px rgba(125, 207, 255, 0.18);
+  }
+  .calc-section .section-description {
+    color: var(--fg-dim);
+    font-size: 0.92rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .formula-box {
+    background: var(--bg-deep);
+    border-radius: 14px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    color: var(--fg);
+    border: 1px solid var(--line-glow);
+    overflow-x: auto;
+    white-space: nowrap;
+    box-shadow: inset 0 0 24px rgba(122, 162, 247, 0.06);
+  }
+  .formula-box .highlight {
+    color: var(--bg-deep);
+    font-weight: 700;
+    background: var(--cyan);
+    padding: 0.1rem 0.45rem;
+    border-radius: 5px;
+  }
+  .formula-box .formula-meaning {
+    display: block;
+    white-space: normal;
+    font-family: 'Outfit', sans-serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px dashed var(--line);
+  }
+
+  .input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    align-items: flex-end;
+    margin-bottom: 1.4rem;
+  }
+  .input-row .input-item {
+    min-width: 150px;
+    max-width: 240px;
+  }
+
+  /* ============ RESULT CARDS ============ */
+  .result-card {
+    background: linear-gradient(135deg, rgba(158, 206, 106, 0.08), rgba(115, 218, 202, 0.05));
+    border: 1px solid rgba(158, 206, 106, 0.3);
+    border-radius: 18px;
+    padding: 1.5rem 1.7rem;
+    margin-top: 0.4rem;
+    position: relative;
+    overflow: hidden;
+    animation: popIn 0.45s ease;
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--green), var(--teal));
+    box-shadow: 0 0 12px rgba(158, 206, 106, 0.5);
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.97) translateY(6px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .result-card .result-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--green);
+    margin-bottom: 0.45rem;
+  }
+  .result-card .result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.6rem;
+    word-break: break-word;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(158, 206, 106, 0.3);
+  }
+  .result-card .result-expression {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    background: var(--bg-deep);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 0.8rem;
+    border: 1px solid var(--line);
+    word-break: break-word;
+  }
+  .result-card .result-meaning {
+    color: var(--fg);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+  .result-card .result-meaning strong { color: var(--green); font-weight: 700; }
+
+  /* ============ CDF CARDS ============ */
+  .cdf-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.1rem;
+    margin-top: 0.4rem;
+  }
+  .cdf-card {
+    border-radius: 18px;
+    padding: 1.4rem 1.6rem;
+    border: 1px solid rgba(158, 206, 106, 0.3);
+    background: linear-gradient(135deg, rgba(158, 206, 106, 0.08), rgba(115, 218, 202, 0.05));
+    position: relative;
+    overflow: hidden;
+    animation: popIn 0.45s ease;
+  }
+  .cdf-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--green), var(--teal));
+  }
+  .cdf-card.blue {
+    background: linear-gradient(135deg, rgba(122, 162, 247, 0.08), rgba(187, 154, 247, 0.05));
+    border-color: rgba(122, 162, 247, 0.3);
+  }
+  .cdf-card.blue::before {
+    background: linear-gradient(180deg, var(--blue), var(--purple));
+  }
+  .cdf-card .result-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--green);
+    margin-bottom: 0.45rem;
+  }
+  .cdf-card.blue .result-label { color: var(--blue); }
+  .cdf-card .result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.35rem;
+    word-break: break-word;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(158, 206, 106, 0.3);
+  }
+  .cdf-card.blue .result-value {
+    color: var(--blue);
+    text-shadow: 0 0 20px rgba(122, 162, 247, 0.3);
+  }
+  .cdf-card .result-meaning {
+    color: var(--fg);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  .cdf-card .result-meaning strong { color: var(--green); font-weight: 700; }
+  .cdf-card.blue .result-meaning strong { color: var(--blue); }
+
+  /* ============ PLACEHOLDER / NOTES ============ */
+  .placeholder-box {
+    color: var(--fg-muted);
+    font-style: italic;
+    padding: 1.3rem 1.6rem;
+    background: var(--bg-deep);
+    border-radius: 14px;
+    border: 1.5px dashed var(--line);
+    font-size: 0.92rem;
+    text-align: center;
+  }
+
+  .explanation-note,
+  .verify-note {
+    background: rgba(224, 175, 104, 0.08);
+    border: 1px solid rgba(224, 175, 104, 0.3);
+    border-radius: 14px;
+    padding: 0.9rem 1.3rem;
+    margin-top: 1.1rem;
+    font-size: 0.88rem;
+    color: var(--yellow);
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+  .explanation-note::before { content: '💡'; font-size: 1.05rem; flex-shrink: 0; }
+  .verify-note::before { content: '✅'; font-size: 1.05rem; flex-shrink: 0; }
+  .verify-note {
+    background: rgba(158, 206, 106, 0.08);
+    border-color: rgba(158, 206, 106, 0.3);
+    color: var(--green);
+  }
+  .explanation-note strong, .verify-note strong { color: var(--yellow); font-weight: 700; }
+  .verify-note strong { color: var(--green); }
+
+  /* ============ CHART ============ */
+  .chart-section {
+    margin-top: 2.2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-soft);
+  }
+  .chart-section h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--fg);
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .chart-section h3::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--magenta);
+    box-shadow: 0 0 0 4px rgba(255, 0, 124, 0.18);
+  }
+  .chart-section .section-description {
+    color: var(--fg-dim);
+    font-size: 0.92rem;
+    margin-bottom: 1.1rem;
+  }
+
+  /* Chart legend box (teaching aid) */
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    padding: 0.85rem 1.2rem;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 1.1rem;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+  }
+  .chart-legend .item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .chart-legend .swatch {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--cyan), var(--blue));
+    box-shadow: 0 0 8px rgba(125, 207, 255, 0.5);
+  }
+  .chart-legend .swatch-line {
+    width: 22px; height: 0;
+    border-top: 2px dashed var(--pink);
+  }
+  .chart-legend .swatch-magenta {
+    background: linear-gradient(180deg, var(--magenta), var(--purple));
+    box-shadow: 0 0 8px rgba(255, 0, 124, 0.5);
+  }
+  .chart-legend .swatch-green {
+    background: linear-gradient(180deg, var(--green), var(--teal));
+    box-shadow: 0 0 8px rgba(158, 206, 106, 0.5);
+  }
+  .chart-legend .swatch-purple {
+    background: linear-gradient(180deg, var(--purple), var(--magenta));
+    box-shadow: 0 0 8px rgba(187, 154, 247, 0.5);
+  }
+
+  .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.1rem;
+    box-shadow: inset 0 0 40px rgba(122, 162, 247, 0.05);
+  }
+  .chart-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ============ HOME PAGE ============ */
+  .home-hero {
+    background: linear-gradient(135deg, rgba(122, 162, 247, 0.08), rgba(255, 0, 124, 0.05));
+    border: 1px solid rgba(122, 162, 247, 0.25);
+    padding: 2.5rem 2.2rem;
+    border-radius: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .home-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, var(--cyan), var(--purple), var(--magenta));
+  }
+  .home-hero h2 {
+    color: var(--fg);
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin-bottom: 0.9rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple), var(--magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .home-hero p {
+    color: var(--fg-dim);
+    margin-bottom: 1.6rem;
+    max-width: 640px;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  .home-hero ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.9rem;
+  }
+  .home-hero ul li {
+    background: var(--bg-deep);
+    border-radius: 12px;
+    padding: 1rem 1.3rem;
+    font-weight: 600;
+    font-size: 0.94rem;
+    color: var(--fg);
+    border: 1px solid var(--line);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: default;
+  }
+  .home-hero ul li:hover {
+    transform: translateY(-3px);
+    border-color: var(--line-glow);
+    box-shadow: 0 10px 22px rgba(122, 162, 247, 0.2);
+  }
+  .home-hero ul li .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    flex-shrink: 0;
+  }
+  .home-hero ul li:nth-child(2) .dot { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  .home-hero ul li:nth-child(3) .dot { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+
+  .hidden { display: none !important; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 700px) {
+    body { padding: 1rem 0.6rem; }
+    .app { padding: 1.3rem 1.1rem 1.8rem; border-radius: 18px; }
+    .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    nav { width: 100%; justify-content: space-between; }
+    nav a { flex: 1 1 auto; text-align: center; padding: 0.55rem 0.6rem; font-size: 0.82rem; }
+    .input-grid { padding: 1.2rem; gap: 1rem; }
+    .btn { width: 100%; text-align: center; }
+    .input-actions { width: 100%; }
+    .selected-values { flex-direction: column; align-items: flex-start; gap: 0.7rem; }
+    .intro-box .formula { font-size: 0.8rem; white-space: normal; word-break: break-word; }
+    .stat-card .value { font-size: 1.3rem; }
+    .result-card .result-value { font-size: 1.6rem; }
+    .cdf-card .result-value { font-size: 1.55rem; }
+    .formula-box { font-size: 0.76rem; padding: 0.9rem; }
+    .chart-container { height: 300px; padding: 0.7rem; }
+    .home-hero { padding: 1.6rem 1.2rem; }
+    .home-hero h2 { font-size: 1.4rem; }
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--line-glow); }
+
+
+  /* ============ CLEAN WHITE MINIMAL THEME ============ */
+  :root {
+    --bg-deep: #ffffff;
+    --bg: #f7f8fa;
+    --bg-soft: #ffffff;
+    --bg-hi: #f5f6f8;
+    --bg-hi-2: #eef1f5;
+    --fg: #20242c;
+    --fg-dim: #596273;
+    --fg-muted: #778091;
+    --fg-faint: #9098a6;
+    --blue: #365fcb;
+    --cyan: #365fcb;
+    --purple: #6478a8;
+    --magenta: #6478a8;
+    --pink: #6478a8;
+    --red: #c94f56;
+    --orange: #a66a2c;
+    --yellow: #8b6b2b;
+    --green: #27845a;
+    --teal: #27845a;
+    --success: #27845a;
+    --error: #c94f56;
+    --line: #e2e5eb;
+    --line-soft: #edf0f4;
+    --line-glow: #a9b9e6;
+  }
+  body { background: #f7f8fa; color: var(--fg); padding: 2rem 1rem; }
+  body::before, .stars { display: none !important; }
+  .app {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(25, 35, 55, .06); padding: 2rem 2.2rem 3rem;
+  }
+  .app::before { height: 0; animation: none; }
+  .app-title h1, .home-hero h2 {
+    background: none; -webkit-background-clip: initial; background-clip: initial;
+    -webkit-text-fill-color: initial; color: #20242c;
+  }
+  .app-title h1 { font-weight: 700; }
+  .app-title .sub { color: #778091; }
+  .app-title .sub::before { background: #27845a; box-shadow: none; animation: none; }
+  nav { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 10px; padding: 4px; }
+  nav a { color: #596273; border-radius: 7px; }
+  nav a:hover { color: #20242c; background: #e9edf4; }
+  nav a.active { color: #fff; background: #365fcb; box-shadow: none; }
+  .panel-header h2::before { background: #365fcb; box-shadow: none; }
+  .teach-card, .teach-card.what, .teach-card.how,
+  .intro-box, .input-grid, .selected-values, .stat-card,
+  .formula-box, .chart-legend, .chart-container, .placeholder-box,
+  .result-card, .cdf-card, .home-hero, .home-hero ul li {
+    background: #fff; border-color: #e2e5eb; box-shadow: none;
+  }
+  .teach-card.what::before, .teach-card.how::before,
+  .result-card::before, .cdf-card::before, .home-hero::before { background: #d8deea; box-shadow: none; }
+  .teach-card h4, .teach-card.how h4 { color: #365fcb; }
+  .teach-card p em, .intro-box .formula .highlight, .formula-box .highlight {
+    color: #fff; background: #365fcb;
+  }
+  .intro-box .formula { background: #f7f8fa; border-color: #e2e5eb; color: #20242c; }
+  .intro-box .formula .highlight { background: #365fcb; color: #fff; }
+  .input-item label, .selected-values .value-label, .stat-card .label { color: #778091; }
+  .input-item label .hint { color: #9098a6; }
+  .input-item input { background: #fff; color: #20242c; border-color: #d9dee7; border-radius: 8px; }
+  .input-item input:hover { border-color: #a9b9e6; }
+  .input-item input:focus { background: #fff; border-color: #365fcb; box-shadow: 0 0 0 3px rgba(54,95,203,.12); }
+  .btn { color: #fff; background: #365fcb; border-radius: 8px; box-shadow: none; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(54,95,203,.16); filter: none; }
+  .selected-values .value-number { color: #365fcb; text-shadow: none; }
+  .stat-card { border-radius: 12px; }
+  .stat-card::after { display: none; }
+  .stat-card:hover { transform: translateY(-2px); border-color: #cbd4e5; box-shadow: 0 5px 16px rgba(25,35,55,.05); }
+  .stat-card .value { color: #20242c; }
+  .stat-card .formula-hint { color: #596273; background: #f5f6f8; border-color: #e2e5eb; }
+  .calc-section h3::before, .chart-section h3::before { background: #365fcb; box-shadow: none; }
+  .formula-box { color: #20242c; }
+  .formula-box .formula-meaning { color: #778091; border-color: #e2e5eb; }
+  .result-card, .cdf-card { border-radius: 12px; }
+  .result-card .result-label, .cdf-card .result-label,
+  .result-card .result-value, .cdf-card .result-value,
+  .result-card .result-meaning strong, .cdf-card .result-meaning strong,
+  .cdf-card.blue .result-label, .cdf-card.blue .result-value,
+  .cdf-card.blue .result-meaning strong { color: #27845a; text-shadow: none; }
+  .result-card .result-expression { background: #f7f8fa; border-color: #e2e5eb; color: #596273; }
+  .explanation-note, .verify-note { background: #f7f8fa; border: 1px solid #e2e5eb; color: #596273; }
+  .explanation-note strong, .verify-note strong { color: #365fcb; }
+  .chart-legend { color: #596273; }
+  .chart-legend .swatch { background: #365fcb; box-shadow: none; }
+  .chart-legend .swatch-line { border-color: #8b6b2b; }
+  .chart-legend .swatch-magenta, .chart-legend .swatch-green, .chart-legend .swatch-purple { background: #6478a8; box-shadow: none; }
+  .home-hero { border-radius: 14px; padding: 2rem; }
+  .home-hero h2 { font-size: 1.8rem; }
+  .home-hero p { color: #596273; }
+  .home-hero ul li { color: #20242c; }
+  .home-hero ul li .dot, .home-hero ul li:nth-child(2) .dot, .home-hero ul li:nth-child(3) .dot { background: #365fcb; box-shadow: none; }
+  ::-webkit-scrollbar-track { background: #f7f8fa; }
+  ::-webkit-scrollbar-thumb { background: #d9dee7; }
+  ::-webkit-scrollbar-thumb:hover { background: #b9c2d1; }
+  @media (max-width: 700px) {
+    body { padding: 1rem .6rem; }
+    .app { padding: 1.3rem 1.1rem 1.8rem; border-radius: 12px; }
+  }
+
+
+
+  /* Reference-inspired dashboard layout: compact, white, and data-first */
+  body { padding: 0; background: #f6f8fb; color: #111827; font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.45; }
+  body::before, .stars { display: none !important; }
+  .app { max-width: 1240px; width: 100%; padding: 0 14px 26px; margin: 0 auto; background: transparent; box-shadow: none; border: 0; }
+  .header { position: sticky; top: 0; z-index: 20; margin: 0 -14px 2px; padding: 7px 18px; min-height: 49px; background: rgba(255,255,255,.97); border-bottom: 1px solid #dce3ed; border-radius: 0; box-shadow: none; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+  .app-title { display:flex; align-items:center; gap:10px; }
+  .app-title::before { content:'Σ'; display:grid; place-items:center; width:30px; height:30px; flex:0 0 30px; border-radius:7px; background:#5145e8; color:#fff; font-size:18px; font-weight:700; }
+  .app-title h1 { color:#111827; font-size:14px; font-weight:700; line-height:1.2; letter-spacing:0; }
+  .app-title .sub { color:#64748b; font-size:10px; margin-top:1px; }
+  #mainNav { display:flex; align-items:center; gap:5px; }
+  #mainNav a { color:#334155; border:0; background:transparent; border-radius:5px; padding:7px 11px; font-size:12px; text-decoration:none; }
+  #mainNav a.active, #mainNav a[aria-current="page"] { background:#eff5ff; color:#2456d9; }
+  .content { padding: 0; }
+  .page { color:#111827; }
+  .page:not(.hidden) { display:grid; grid-template-columns:minmax(0, .82fr) minmax(0, 1.18fr); gap:14px 20px; align-items:start; }
+  .panel-header { grid-column:1 / -1; background:#fff; border:1px solid #dce4ef; border-radius:10px; padding:20px 23px 15px; margin:0; }
+  .panel-header h2 { color:#111827; font-size:20px; margin:0 0 3px; }
+  .panel-header p { color:#64748b; font-size:12px; }
+  .teach-grid { display:none !important; }
+  .intro-box { grid-column:1 / -1; margin:0; padding:16px 18px; background:#f8fafc; border:1px solid #dce4ef; border-radius:8px; box-shadow:none; text-align:center; }
+  .intro-box .formula { color:#111827; font-size:21px; font-weight:500; }
+  .intro-box .formula-meaning { color:#64748b; font-size:11px; margin-top:7px; }
+  .input-grid { grid-column:1; display:flex; flex-direction:column; gap:13px; padding:17px 19px; margin:0; background:#fff; border:1px solid #dce4ef; border-radius:9px; }
+  .input-item label { color:#1f2937; font-size:12px; font-weight:600; margin-bottom:5px; display:flex; justify-content:space-between; gap:8px; }
+  .input-item .hint { color:#718096; font-size:10px; font-weight:400; }
+  input, select { background:#f8fafc !important; color:#172033 !important; border:1px solid #cbd5e1 !important; border-radius:6px !important; box-shadow:none !important; padding:9px 11px !important; font-size:12px !important; width:100%; }
+  .input-actions { display:flex; align-items:center; }
+  .btn, button { color:#fff !important; background:#3267e9 !important; border:1px solid #3267e9 !important; border-radius:5px !important; box-shadow:none !important; padding:8px 13px !important; font-size:11px !important; font-weight:600 !important; }
+  .btn:hover, button:hover { background:#2454cb !important; transform:none !important; }
+  .selected-values { grid-column:1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0; padding:12px; background:#fff; border:1px solid #dce4ef; border-radius:9px; }
+  .value-item { background:#f8fafc; border:1px solid #edf1f7; border-radius:6px; padding:10px; text-align:center; }
+  .value-label { color:#64748b; font-size:11px; }
+  .value-number { color:#2456e8; font-size:17px; font-weight:700; }
+  .stats-grid { grid-column:2; grid-row:3 / span 2; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:0; padding:17px 19px; background:#fff; border:1px solid #dce4ef; border-radius:9px; }
+  .stat-card { background:#f8fafc; border:1px solid #dce4ef; border-radius:9px; padding:14px; box-shadow:none; min-width:0; }
+  .stat-card .label { color:#64748b; font-size:11px; }
+  .stat-card .value { color:#315fe9; font-size:20px; font-weight:700; margin:5px 0 12px; }
+  .stat-card .formula-hint { color:#334155; border-top:1px solid #e2e8f0; padding-top:8px; font-size:10px; }
+  .calc-section { background:#fff; border:1px solid #dce4ef; border-radius:10px; padding:19px 20px; margin:0; box-shadow:none; min-width:0; }
+  .calc-section h3, .chart-section h3 { color:#111827; font-size:14px; border-bottom:1px solid #edf1f6; padding-bottom:10px; margin-bottom:12px; }
+  .calc-section h3::before, .chart-section h3::before { display:none !important; }
+  .calc-section .section-description, .chart-section .section-description { color:#64748b; font-size:11px; }
+  .formula-box { background:#f8fafc; border:1px solid #dce4ef; border-radius:6px; box-shadow:none; padding:16px 12px; color:#243047; font-size:13px; text-align:center; }
+  .formula-box .formula-meaning { color:#64748b; font-size:10px; }
+  .input-row { display:flex; align-items:end; gap:10px; margin-top:14px; }
+  .input-row .input-item { flex:1; min-width:0; }
+  .placeholder-box, .explanation-note { background:#f8fafc; border:1px solid #dce4ef; border-radius:6px; color:#475569; font-size:11px; padding:12px; }
+  #binomialPmfResult, #binomialCdfResult { margin-top:12px; }
+  .chart-section { grid-column:1 / -1; background:#fff; border:1px solid #dce4ef; border-radius:10px; padding:18px 20px; margin:0; box-shadow:none; }
+  .chart-legend { color:#64748b; }
+  .chart-legend .swatch { background:#6596f5; box-shadow:none; }
+  .chart-legend .swatch-line { border-color:#f59e0b; }
+  .chart-container { height:280px; background:#fff; border:0; box-shadow:none; padding:0; }
+  .chart-container canvas { max-height:280px; }
+  .validation-message { font-size:10px; }
+  .page > * { min-width:0; }
+  @media (max-width:760px) {
+    .header { align-items:flex-start; flex-direction:column; padding:10px 14px; }
+    #mainNav { flex-wrap:wrap; }
+    .page:not(.hidden) { grid-template-columns:minmax(0,1fr); }
+    .panel-header,.intro-box,.input-grid,.selected-values,.stats-grid,.calc-section,.chart-section { grid-column:1 !important; grid-row:auto !important; }
+    .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .input-row { flex-wrap:wrap; }
+  }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Decorative twinkling stars -->
+  <div class="stars" id="stars"></div>
+
+  <div class="app">
+    <header class="header">
+      <div class="app-title">
+        <h1>Discrete Probability Distributions</h1>
+        <div class="sub">AIML Laboratory · Interactive Lesson</div>
+      </div>
+      <nav id="mainNav">
+        <a href="#" data-page="home">Home</a>
+        <a href="#" data-page="binomial">Binomial</a>
+        <a href="#" data-page="poisson">Poisson</a>
+        <a href="#" data-page="geometric">Geometric</a>
+      </nav>
+    </header>
+
+    <main class="content" id="contentArea">
+      <!-- ================= HOME PAGE ================= -->
+      <div id="homePage" class="page hidden">
+        <div class="home-hero">
+          <h2>Welcome to the Lab 🌃</h2>
+          <p>
+            This interactive notebook helps you explore <strong>discrete probability distributions</strong>.
+            Each module below introduces one distribution in plain language, then lets you adjust its
+            parameters and watch the math come alive in a live chart.
+          </p>
+          <p style="margin-bottom:1.3rem;">
+            <strong style="color:var(--cyan)">For students:</strong> read the "What is this?" box first,
+            then follow the numbered steps. <strong style="color:var(--green)">For teachers:</strong> project
+            a module, adjust the sliders in real time, and ask the class to predict the effect before
+            clicking <em>Update</em>.
+          </p>
+          <ul>
+            <li><span class="dot"></span> 📊 Binomial — success counting</li>
+            <li><span class="dot"></span> 📈 Poisson — rare events per interval</li>
+            <li><span class="dot"></span> 🔁 Geometric — trials until first success</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ================= BINOMIAL PAGE ================= -->
+      <div id="binomialPage" class="page hidden">
+        <div class="panel-header">
+          <h2>Binomial Distribution</h2>
+          <p>Counting the number of successes in a fixed number of independent trials.</p>
+        </div>
+
+        <!-- TEACHING CARDS -->
+        <div class="teach-grid">
+          <div class="teach-card what">
+            <h4><span class="emoji">📖</span> What is this?</h4>
+            <p>
+              Imagine flipping a coin <em>n</em> times. Each flip is an independent trial with the same
+              success probability <em>p</em>. The Binomial distribution tells you the probability of getting
+              exactly <em>k</em> successes (heads) in those <em>n</em> flips.
+            </p>
+            <p style="margin-top:0.6rem;">
+              <strong>Real example:</strong> In a class of 20 students, if each student has a 35% chance of
+              passing a quiz, what's the probability that exactly 7 students pass?
+            </p>
+          </div>
+          <div class="teach-card how">
+            <h4><span class="emoji">🧭</span> How to use</h4>
+            <ol>
+              <li>Set <strong>n</strong> (trials) and <strong>p</strong> (success chance).</li>
+              <li>Click <strong>Update</strong> to refresh stats + chart.</li>
+              <li>Read the 5 stat cards (mean, variance, …).</li>
+              <li>Enter a <strong>k</strong> to compute P(X = k) or P(X ≤ k).</li>
+              <li>Look at the chart — the dashed line marks the mean.</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- FORMULA -->
+        <div class="intro-box">
+          <div class="formula">
+            X ~ Binomial(<span class="highlight">n</span>, <span class="highlight">p</span>)
+          </div>
+          <div class="formula-meaning">
+            "X is the number of successes in n independent trials, each with success probability p."
+          </div>
+        </div>
+
+        <!-- INPUTS -->
+        <div class="input-grid">
+          <div class="input-item">
+            <label for="nInput">Number of trials (n) <span class="hint">1–200</span></label>
+            <input type="number" id="nInput" min="1" max="200" step="1" value="20" placeholder="e.g. 20">
+            <div class="validation-message" id="nError"></div>
+          </div>
+          <div class="input-item">
+            <label for="pInput">Probability of success (p) <span class="hint">0–1</span></label>
+            <input type="number" id="pInput" min="0" max="1" step="0.01" value="0.35" placeholder="0 – 1">
+            <div class="validation-message" id="pError"></div>
+          </div>
+          <div class="input-actions">
+            <button class="btn" id="updateBinomialBtn">Update</button>
+          </div>
+        </div>
+
+        <div class="selected-values">
+          <div class="value-item">
+            <span class="value-label">n =</span>
+            <span class="value-number" id="binomialDisplayN">20</span>
+          </div>
+          <div class="value-item">
+            <span class="value-label">p =</span>
+            <span class="value-number" id="binomialDisplayP">0.35</span>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Mean (μ)</div>
+            <div class="value" id="binomialMean">—</div>
+            <div class="formula-hint">np</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Variance (σ²)</div>
+            <div class="value" id="binomialVariance">—</div>
+            <div class="formula-hint">np(1-p)</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Std. deviation (σ)</div>
+            <div class="value" id="binomialStdDev">—</div>
+            <div class="formula-hint">√variance</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Second moment E[X²]</div>
+            <div class="value" id="binomialSecondMoment">—</div>
+            <div class="formula-hint">σ² + μ²</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Skewness</div>
+            <div class="value" id="binomialSkewness">—</div>
+            <div class="formula-hint">(1-2p) / σ</div>
+          </div>
+        </div>
+
+        <!-- PMF -->
+        <div class="calc-section">
+          <h3>Probability Mass Function (PMF)</h3>
+          <p class="section-description">
+            PMF answers: "What is the probability of getting <strong>exactly</strong> k successes?"
+          </p>
+          <div class="formula-box">
+            P(X = <span class="highlight">k</span>) = C(<span class="highlight">n</span>, <span class="highlight">k</span>) · <span class="highlight">p</span><sup>k</sup> · (1−<span class="highlight">p</span>)<sup>(n−k)</sup>
+            <span class="formula-meaning">C(n, k) is "n choose k" — the number of ways to pick k successes out of n trials.</span>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <label for="kBinomialInput">Number of successes (k)</label>
+              <input type="number" id="kBinomialInput" min="0" max="200" step="1" value="7" placeholder="e.g. 7">
+              <div class="validation-message" id="kBinomialError"></div>
+            </div>
+            <div class="input-actions">
+              <button class="btn" id="computeBinomialPmfBtn">Calculate P(X = k)</button>
+            </div>
+          </div>
+          <div id="binomialPmfResult">
+            <div class="placeholder-box">Enter a value for k (0 ≤ k ≤ n) and click <strong>Calculate</strong>.</div>
+          </div>
+        </div>
+
+        <!-- CDF -->
+        <div class="calc-section">
+          <h3>Cumulative Distribution Function (CDF)</h3>
+          <p class="section-description">
+            CDF answers: "What is the probability of getting <strong>k or fewer</strong> successes?"
+          </p>
+          <div class="formula-box">
+            P(X ≤ <span class="highlight">k</span>) = Σ<sub>i=0</sub><sup>k</sup> C(<span class="highlight">n</span>, i) · <span class="highlight">p</span><sup>i</sup> · (1−<span class="highlight">p</span>)<sup>(n−i)</sup>
+            <span class="formula-meaning">Add up all the individual probabilities from i = 0 up to i = k.</span>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <label for="kBinomialCdfInput">Number of successes (k)</label>
+              <input type="number" id="kBinomialCdfInput" min="0" max="200" step="1" value="7" placeholder="e.g. 7">
+              <div class="validation-message" id="kBinomialCdfError"></div>
+            </div>
+            <div class="input-actions">
+              <button class="btn" id="computeBinomialCdfBtn">Calculate CDF</button>
+            </div>
+          </div>
+          <div id="binomialCdfResult">
+            <div class="placeholder-box">Enter a value for k (0 ≤ k ≤ n) and click <strong>Calculate CDF</strong>.</div>
+          </div>
+          <div class="explanation-note">
+            <span><strong>P(X ≤ k)</strong> = probability of getting <strong>k or fewer</strong> successes. The complement P(X &gt; k) is shown alongside.</span>
+          </div>
+        </div>
+
+        <!-- CHART -->
+        <div class="chart-section">
+          <h3>Binomial PMF Chart</h3>
+          <p class="section-description">Bar chart of P(X = k) for every possible number of successes k.</p>
+          <div class="chart-legend">
+            <div class="item"><span class="swatch"></span> Probability of exactly k successes</div>
+            <div class="item"><span class="swatch-line"></span> Mean (μ = np)</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="pmfChartBinomial"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= POISSON PAGE ================= -->
+      <div id="poissonPage" class="page hidden">
+        <div class="panel-header">
+          <h2>Poisson Distribution</h2>
+          <p>Counting how many events happen in a fixed interval — when events are rare.</p>
+        </div>
+
+        <div class="teach-grid">
+          <div class="teach-card what">
+            <h4><span class="emoji">📖</span> What is this?</h4>
+            <p>
+              Suppose events happen randomly but at a steady average rate <em>λ</em> per interval
+              (e.g. 5 emails per hour). The Poisson distribution gives the probability of observing
+              exactly <em>x</em> events in one such interval.
+            </p>
+            <p style="margin-top:0.6rem;">
+              <strong>Real example:</strong> A help desk gets an average of 5 calls per hour. What's the
+              probability of getting exactly 2 calls in the next hour?
+            </p>
+          </div>
+          <div class="teach-card how">
+            <h4><span class="emoji">🧭</span> How to use</h4>
+            <ol>
+              <li>Set <strong>λ</strong> — the average rate per interval.</li>
+              <li>Set <strong>x</strong> — the count you want to test.</li>
+              <li>Click <strong>Update</strong> to refresh stats + chart.</li>
+              <li>Use the PMF section to find P(X = x).</li>
+              <li>Use the CDF section to find P(X ≤ x).</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="intro-box">
+          <div class="formula">
+            X ~ Poisson(<span class="highlight">λ</span>)
+          </div>
+          <div class="formula-meaning">
+            "X is the number of events in one interval, when events occur at an average rate λ."
+          </div>
+        </div>
+
+        <div class="input-grid">
+          <div class="input-item">
+            <label for="lambdaInput">Mean rate (λ) <span class="hint">≥ 0</span></label>
+            <input type="number" id="lambdaInput" min="0" step="0.1" value="5" placeholder="e.g. 5">
+            <div class="validation-message" id="lambdaError"></div>
+          </div>
+          <div class="input-item">
+            <label for="xInput">Number of events (x) <span class="hint">≥ 0 integer</span></label>
+            <input type="number" id="xInput" min="0" step="1" value="2" placeholder="e.g. 2">
+            <div class="validation-message" id="xError"></div>
+          </div>
+          <div class="input-actions">
+            <button class="btn" id="updatePoissonBtn">Update</button>
+          </div>
+        </div>
+
+        <div class="selected-values">
+          <div class="value-item">
+            <span class="value-label">λ =</span>
+            <span class="value-number" id="poissonDisplayLambda">5</span>
+          </div>
+          <div class="value-item">
+            <span class="value-label">x =</span>
+            <span class="value-number" id="poissonDisplayX">2</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Mean (μ)</div>
+            <div class="value" id="poissonMean">—</div>
+            <div class="formula-hint">λ</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Variance (σ²)</div>
+            <div class="value" id="poissonVariance">—</div>
+            <div class="formula-hint">λ</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Std. deviation (σ)</div>
+            <div class="value" id="poissonStdDev">—</div>
+            <div class="formula-hint">√λ</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Second moment E[X²]</div>
+            <div class="value" id="poissonSecondMoment">—</div>
+            <div class="formula-hint">σ² + μ²</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Skewness</div>
+            <div class="value" id="poissonSkewness">—</div>
+            <div class="formula-hint">1 / √λ</div>
+          </div>
+        </div>
+
+        <div class="calc-section">
+          <h3>Probability Mass Function (PMF)</h3>
+          <p class="section-description">Probability of observing <strong>exactly</strong> x events.</p>
+          <div class="formula-box">
+            P(X = <span class="highlight">x</span>) = (e<sup>−<span class="highlight">λ</span></sup> · <span class="highlight">λ</span><sup><span class="highlight">x</span></sup>) / <span class="highlight">x</span>!
+            <span class="formula-meaning">e is Euler's number (≈ 2.718). The x! at the bottom is the factorial of x.</span>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <label for="xPoissonInput">Number of events (x)</label>
+              <input type="number" id="xPoissonInput" min="0" step="1" value="2" placeholder="e.g. 2">
+              <div class="validation-message" id="xPoissonError"></div>
+            </div>
+            <div class="input-actions">
+              <button class="btn" id="computePoissonPmfBtn">Calculate P(X = x)</button>
+            </div>
+          </div>
+          <div id="poissonPmfResult">
+            <div class="placeholder-box">Enter a value for x (x ≥ 0) and click <strong>Calculate</strong>.</div>
+          </div>
+        </div>
+
+        <div class="calc-section">
+          <h3>Cumulative Distribution Function (CDF)</h3>
+          <p class="section-description">Probability of observing <strong>x or fewer</strong> events.</p>
+          <div class="formula-box">
+            P(X ≤ <span class="highlight">x</span>) = Σ<sub>i=0</sub><sup>x</sup> (e<sup>−<span class="highlight">λ</span></sup> · <span class="highlight">λ</span><sup>i</sup>) / i!
+            <span class="formula-meaning">Sum the individual PMF probabilities from 0 up to x.</span>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <label for="xPoissonCdfInput">Number of events (x)</label>
+              <input type="number" id="xPoissonCdfInput" min="0" step="1" value="2" placeholder="e.g. 2">
+              <div class="validation-message" id="xPoissonCdfError"></div>
+            </div>
+            <div class="input-actions">
+              <button class="btn" id="computePoissonCdfBtn">Calculate CDF</button>
+            </div>
+          </div>
+          <div id="poissonCdfResult">
+            <div class="placeholder-box">Enter a value for x (x ≥ 0) and click <strong>Calculate CDF</strong>.</div>
+          </div>
+          <div class="explanation-note">
+            <span><strong>P(X ≤ x)</strong> = probability of observing <strong>x or fewer</strong> events. The complement is shown too.</span>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h3>Poisson PMF Chart</h3>
+          <p class="section-description">Bar chart of P(X = x) for a useful range of event counts.</p>
+          <div class="chart-legend">
+            <div class="item"><span class="swatch swatch-green"></span> Probability of exactly x events</div>
+            <div class="item"><span class="swatch-line"></span> Mean (μ = λ)</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="pmfChartPoisson"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= GEOMETRIC PAGE ================= -->
+      <div id="geometricPage" class="page hidden">
+        <div class="panel-header">
+          <h2>Geometric Distribution</h2>
+          <p>Counting how many trials are needed to get the first success.</p>
+        </div>
+
+        <div class="teach-grid">
+          <div class="teach-card what">
+            <h4><span class="emoji">📖</span> What is this?</h4>
+            <p>
+              Keep flipping a biased coin (success probability <em>p</em>) until you get heads for the
+              first time. The Geometric distribution tells you the probability that the first success
+              happens on the <em>k</em>-th trial.
+            </p>
+            <p style="margin-top:0.6rem;">
+              <strong>Real example:</strong> A basketball player scores a free throw 35% of the time.
+              What's the chance their first successful shot is on the 3rd attempt?
+            </p>
+          </div>
+          <div class="teach-card how">
+            <h4><span class="emoji">🧭</span> How to use</h4>
+            <ol>
+              <li>Set <strong>p</strong> — the success chance per trial (0 &lt; p ≤ 1).</li>
+              <li>Click <strong>Update</strong> to refresh stats + chart.</li>
+              <li>Enter <strong>k</strong> to compute P(X = k) — first success on the k-th trial.</li>
+              <li>Use the CDF section for P(X ≤ k) — first success on or before the k-th trial.</li>
+              <li>Notice: smaller p ⇒ longer wait (chart shifts right).</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="intro-box">
+          <div class="formula">
+            X ~ Geometric(<span class="highlight">p</span>)
+          </div>
+          <div class="formula-meaning">
+            "X is the trial number on which the first success occurs."
+          </div>
+        </div>
+
+        <div class="input-grid">
+          <div class="input-item">
+            <label for="pGeometricInput">Probability of success (p) <span class="hint">0 &lt; p ≤ 1</span></label>
+            <input type="number" id="pGeometricInput" min="0.0001" max="1" step="0.01" value="0.35" placeholder="0 – 1">
+            <div class="validation-message" id="pGeometricError"></div>
+          </div>
+          <div class="input-actions">
+            <button class="btn" id="updateGeometricBtn">Update</button>
+          </div>
+        </div>
+
+        <div class="selected-values">
+          <div class="value-item">
+            <span class="value-label">p =</span>
+            <span class="value-number" id="geometricDisplayP">0.35</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">Mean (μ)</div>
+            <div class="value" id="geometricMean">—</div>
+            <div class="formula-hint">1/p</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Variance (σ²)</div>
+            <div class="value" id="geometricVariance">—</div>
+            <div class="formula-hint">(1-p)/p²</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Std. deviation (σ)</div>
+            <div class="value" id="geometricStdDev">—</div>
+            <div class="formula-hint">√variance</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Second moment E[X²]</div>
+            <div class="value" id="geometricSecondMoment">—</div>
+            <div class="formula-hint">σ² + μ²</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Skewness</div>
+            <div class="value" id="geometricSkewness">—</div>
+            <div class="formula-hint">(2-p) / √(1-p)</div>
+          </div>
+        </div>
+
+        <div class="calc-section">
+          <h3>Probability Mass Function (PMF)</h3>
+          <p class="section-description">Probability that the first success occurs on the <strong>exactly k-th</strong> trial.</p>
+          <div class="formula-box">
+            P(X = <span class="highlight">k</span>) = (1−<span class="highlight">p</span>)<sup><span class="highlight">k</span>−1</sup> · <span class="highlight">p</span>
+            <span class="formula-meaning">You need k−1 failures (prob. 1−p each) followed by one success (prob. p).</span>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <label for="kGeometricInput">Trial number (k)</label>
+              <input type="number" id="kGeometricInput" min="1" step="1" value="3" placeholder="e.g. 3">
+              <div class="validation-message" id="kGeometricError"></div>
+            </div>
+            <div class="input-actions">
+              <button class="btn" id="computeGeometricPmfBtn">Calculate P(X = k)</button>
+            </div>
+          </div>
+          <div id="geometricPmfResult">
+            <div class="placeholder-box">Enter a value for k (k ≥ 1) and click <strong>Calculate</strong>.</div>
+          </div>
+        </div>
+
+        <div class="calc-section">
+          <h3>Cumulative Distribution Function (CDF)</h3>
+          <p class="section-description">Probability that the first success happens <strong>on or before</strong> the k-th trial.</p>
+          <div class="formula-box">
+            P(X ≤ <span class="highlight">k</span>) = 1 − (1−<span class="highlight">p</span>)<sup><span class="highlight">k</span></sup>
+            <span class="formula-meaning">(1−p)^k is the probability that you never succeeded in the first k trials.</span>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <label for="kGeometricCdfInput">Trial number (k)</label>
+              <input type="number" id="kGeometricCdfInput" min="1" step="1" value="3" placeholder="e.g. 3">
+              <div class="validation-message" id="kGeometricCdfError"></div>
+            </div>
+            <div class="input-actions">
+              <button class="btn" id="computeGeometricCdfBtn">Calculate CDF</button>
+            </div>
+          </div>
+          <div id="geometricCdfResult">
+            <div class="placeholder-box">Enter a value for k (k ≥ 1) and click <strong>Calculate CDF</strong>.</div>
+          </div>
+          <div class="explanation-note">
+            <span><strong>P(X ≤ k)</strong> = chance of getting your first success on or before the <strong>k</strong>th trial.</span>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h3>Geometric PMF Chart</h3>
+          <p class="section-description">Bar chart of P(X = k) for trial numbers k = 1, 2, 3, …</p>
+          <div class="chart-legend">
+            <div class="item"><span class="swatch swatch-purple"></span> Probability first success on k-th trial</div>
+            <div class="item"><span class="swatch-line"></span> Mean (μ = 1/p)</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="pmfChartGeometric"></canvas>
+          </div>
+        </div>
+
+        <div class="verify-note" id="geometricVerifyNote">
+          <span>For p = 0.35: on average, it takes 1 / 0.35 ≈ 2.86 trials to get the first success.</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      // ============ STARFIELD ============
+      const starsEl = document.getElementById('stars');
+      for (let i = 0; i < 60; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random() * 100 + 'vw';
+        s.style.top = Math.random() * 100 + 'vh';
+        const colors = ['#7dcfff', '#bb9af7', '#9ece6a', '#e0af68', '#7aa2f7'];
+        s.style.background = colors[Math.floor(Math.random() * colors.length)];
+        s.style.animationDuration = (Math.random() * 4 + 2) + 's';
+        s.style.animationDelay = Math.random() * 4 + 's';
+        starsEl.appendChild(s);
+      }
+
+      // ============ PAGE NAVIGATION ============
+      const navLinks = document.querySelectorAll('nav a');
+      const pages = {
+        home: document.getElementById('homePage'),
+        binomial: document.getElementById('binomialPage'),
+        poisson: document.getElementById('poissonPage'),
+        geometric: document.getElementById('geometricPage')
+      };
+
+      function setActivePage(pageId) {
+        Object.values(pages).forEach(p => p.classList.add('hidden'));
+        if (pages[pageId]) pages[pageId].classList.remove('hidden');
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.dataset.page === pageId) link.classList.add('active');
+        });
+        if (pageId === 'binomial')  setTimeout(() => renderBinomialChart(), 50);
+        if (pageId === 'poisson')   setTimeout(() => renderPoissonChart(), 50);
+        if (pageId === 'geometric') setTimeout(() => renderGeometricChart(), 50);
+      }
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          setActivePage(link.dataset.page);
+        });
+      });
+      setActivePage('home');
+
+      // ============ HELPERS ============
+      function formatStat(value) {
+        if (!isFinite(value)) return '∞';
+        let str = value.toFixed(4);
+        str = str.replace(/\.?0+$/, '');
+        if (str === '') str = '0';
+        return str;
+      }
+      function factorial(n) {
+        if (n === 0 || n === 1) return 1;
+        let result = 1;
+        for (let i = 2; i <= n; i++) result *= i;
+        return result;
+      }
+      function binomialCoefficient(n, k) {
+        if (k < 0 || k > n) return 0;
+        if (k === 0 || k === n) return 1;
+        if (k > n - k) k = n - k;
+        let coeff = 1;
+        for (let i = 1; i <= k; i++) coeff *= (n - k + i) / i;
+        return coeff;
+      }
+      function binomialPMF(n, p, k) {
+        if (k < 0 || k > n) return 0;
+        if (p === 0) return k === 0 ? 1 : 0;
+        if (p === 1) return k === n ? 1 : 0;
+        return binomialCoefficient(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k);
+      }
+      function binomialCDF(n, p, k) {
+        if (k < 0) return 0;
+        if (k >= n) return 1;
+        let sum = 0;
+        for (let i = 0; i <= k; i++) sum += binomialPMF(n, p, i);
+        return sum;
+      }
+      function poissonPMF(lambda, x) {
+        if (x < 0) return 0;
+        return (Math.exp(-lambda) * Math.pow(lambda, x)) / factorial(x);
+      }
+      function poissonCDF(lambda, x) {
+        if (x < 0) return 0;
+        let sum = 0;
+        for (let i = 0; i <= x; i++) sum += poissonPMF(lambda, i);
+        return sum;
+      }
+
+      // ============ CHART HELPERS ============
+      function makeGradient(ctx, area, c1, c2) {
+        if (!area) return c1;
+        const g = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+        g.addColorStop(0, c1);
+        g.addColorStop(1, c2);
+        return g;
+      }
+      const commonTooltip = {
+        backgroundColor: '#16161e',
+        titleColor: '#7dcfff',
+        bodyColor: '#c0caf5',
+        titleFont: { size: 13, weight: '700', family: 'Outfit' },
+        bodyFont: { size: 12, family: 'JetBrains Mono' },
+        padding: 12,
+        cornerRadius: 10,
+        displayColors: false,
+        borderColor: '#7aa2f7',
+        borderWidth: 1
+      };
+      function commonScales(xTitle, yTitle) {
+        return {
+          x: {
+            title: { display: true, text: xTitle, color: '#a9b1d6', font: { size: 12, weight: '600', family: 'Outfit' } },
+            grid: { color: 'rgba(47, 51, 77, 0.5)' },
+            ticks: { color: '#565f89', font: { size: 10, family: 'JetBrains Mono' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 25 }
+          },
+          y: {
+            title: { display: true, text: yTitle, color: '#a9b1d6', font: { size: 12, weight: '600', family: 'Outfit' } },
+            beginAtZero: true,
+            grid: { color: 'rgba(47, 51, 77, 0.5)' },
+            ticks: { color: '#565f89', font: { size: 10, family: 'JetBrains Mono' }, callback: (v) => v.toFixed(3) }
+          }
+        };
+      }
+      function meanLinePlugin(id, mean) {
+        return {
+          id: id,
+          afterDraw: function(chart) {
+            const ctx = chart.ctx;
+            const yAxis = chart.scales.y;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta.data || meta.data.length === 0) return;
+            const labels = chart.data.labels;
+            const n = labels.length - 1;
+            const meanClamped = Math.max(0, Math.min(n, mean));
+            const li = Math.floor(meanClamped);
+            const ui = Math.ceil(meanClamped);
+            let xPos;
+            if (li === ui) {
+              const bar = meta.data[li];
+              if (bar) xPos = bar.x;
+            } else {
+              const lb = meta.data[li], ub = meta.data[ui];
+              if (lb && ub) {
+                const f = meanClamped - li;
+                xPos = lb.x + (ub.x - lb.x) * f;
+              }
+            }
+            if (xPos === undefined) return;
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([6, 5]);
+            ctx.strokeStyle = '#f7768e';
+            ctx.lineWidth = 2;
+            ctx.moveTo(xPos, yAxis.top);
+            ctx.lineTo(xPos, yAxis.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            const label = 'μ = ' + mean.toFixed(2);
+            ctx.font = 'bold 11px Outfit, system-ui, sans-serif';
+            const tw = ctx.measureText(label).width;
+            const padX = 8, boxH = 20;
+            const boxW = tw + padX * 2;
+            const bx = xPos - boxW / 2;
+            const by = yAxis.top - boxH - 4;
+            ctx.fillStyle = '#f7768e';
+            ctx.beginPath();
+            ctx.roundRect(bx, by, boxW, boxH, 8);
+            ctx.fill();
+            ctx.fillStyle = '#16161e';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, xPos, by + boxH / 2);
+            ctx.restore();
+          }
+        };
+      }
+
+      // ============ BINOMIAL ============
+      const nInput = document.getElementById('nInput');
+      const pInput = document.getElementById('pInput');
+      const nError = document.getElementById('nError');
+      const pError = document.getElementById('pError');
+      const updateBinomialBtn = document.getElementById('updateBinomialBtn');
+      const binomialDisplayN = document.getElementById('binomialDisplayN');
+      const binomialDisplayP = document.getElementById('binomialDisplayP');
+      const binomialMean = document.getElementById('binomialMean');
+      const binomialVariance = document.getElementById('binomialVariance');
+      const binomialStdDev = document.getElementById('binomialStdDev');
+      const binomialSecondMoment = document.getElementById('binomialSecondMoment');
+      const binomialSkewness = document.getElementById('binomialSkewness');
+      const kBinomialInput = document.getElementById('kBinomialInput');
+      const kBinomialError = document.getElementById('kBinomialError');
+      const computeBinomialPmfBtn = document.getElementById('computeBinomialPmfBtn');
+      const binomialPmfResult = document.getElementById('binomialPmfResult');
+      const kBinomialCdfInput = document.getElementById('kBinomialCdfInput');
+      const kBinomialCdfError = document.getElementById('kBinomialCdfError');
+      const computeBinomialCdfBtn = document.getElementById('computeBinomialCdfBtn');
+      const binomialCdfResult = document.getElementById('binomialCdfResult');
+      let binomialChart = null;
+
+      function validateN(value) {
+        const num = Number(value);
+        if (value.trim() === '' || !Number.isInteger(num) || num <= 0) return 'n must be a positive integer.';
+        if (num > 200) return 'n must be ≤ 200 for this lab.';
+        return '';
+      }
+      function validateP(value) {
+        const num = Number(value);
+        if (value.trim() === '' || isNaN(num) || num < 0 || num > 1) return 'p must be between 0 and 1.';
+        return '';
+      }
+      function validateK(kVal, n) {
+        const num = Number(kVal);
+        if (kVal.trim() === '' || !Number.isInteger(num) || num < 0) return 'k must be a non-negative integer.';
+        if (num > n) return `k must be ≤ n (currently n = ${n}).`;
+        return '';
+      }
+      function updateBinomial() {
+        nError.textContent = ''; pError.textContent = '';
+        nInput.style.borderColor = '#2f334d'; pInput.style.borderColor = '#2f334d';
+        const nVal = nInput.value.trim(), pVal = pInput.value.trim();
+        const nErr = validateN(nVal), pErr = validateP(pVal);
+        let ok = true;
+        if (nErr) { nError.textContent = nErr; nInput.style.borderColor = '#f7768e'; ok = false; }
+        if (pErr) { pError.textContent = pErr; pInput.style.borderColor = '#f7768e'; ok = false; }
+        if (ok) {
+          const n = Number(nVal), p = Number(pVal);
+          binomialDisplayN.textContent = n;
+          binomialDisplayP.textContent = p.toFixed(2).replace(/\.?0+$/, '');
+          const mean = n * p;
+          const variance = n * p * (1 - p);
+          const stdDev = Math.sqrt(variance);
+          const secondMoment = variance + mean * mean;
+          const skewness = (1 - 2 * p) / Math.sqrt(n * p * (1 - p));
+          binomialMean.textContent = formatStat(mean);
+          binomialVariance.textContent = formatStat(variance);
+          binomialStdDev.textContent = formatStat(stdDev);
+          binomialSecondMoment.textContent = formatStat(secondMoment);
+          binomialSkewness.textContent = formatStat(skewness);
+          kBinomialInput.max = n; kBinomialCdfInput.max = n;
+        } else {
+          ['binomialDisplayN','binomialDisplayP','binomialMean','binomialVariance',
+           'binomialStdDev','binomialSecondMoment','binomialSkewness'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+          });
+        }
+      }
+      function computeBinomialPMF() {
+        kBinomialError.textContent = '';
+        kBinomialInput.style.borderColor = '#2f334d';
+        const nVal = nInput.value.trim(), pVal = pInput.value.trim();
+        if (validateN(nVal) || validateP(pVal)) {
+          binomialPmfResult.innerHTML = `<div class="placeholder-box">⚠️ Please fix the errors in n and p above first.</div>`;
+          return;
+        }
+        const n = Number(nVal), p = Number(pVal);
+        const kVal = kBinomialInput.value.trim();
+        const kErr = validateK(kVal, n);
+        if (kErr) {
+          kBinomialError.textContent = kErr;
+          kBinomialInput.style.borderColor = '#f7768e';
+          binomialPmfResult.innerHTML = `<div class="placeholder-box">⚠️ Please enter a valid k value.</div>`;
+          return;
+        }
+        const k = Number(kVal);
+        const prob = binomialPMF(n, p, k);
+        binomialPmfResult.innerHTML = `
+          <div class="result-card">
+            <div class="result-label">P(X = ${k}) for n = ${n}, p = ${p}</div>
+            <div class="result-value">${prob.toFixed(8)}</div>
+            <div class="result-expression">P(X = ${k}) = C(${n}, ${k}) · ${p}^${k} · (1−${p})^(${n}−${k})</div>
+            <div class="result-meaning">
+              Probability of exactly <strong>${k}</strong> success${k === 1 ? '' : 'es'} in <strong>${n}</strong> trials.
+            </div>
+          </div>`;
+      }
+      function computeBinomialCDF() {
+        kBinomialCdfError.textContent = '';
+        kBinomialCdfInput.style.borderColor = '#2f334d';
+        const nVal = nInput.value.trim(), pVal = pInput.value.trim();
+        if (validateN(nVal) || validateP(pVal)) {
+          binomialCdfResult.innerHTML = `<div class="placeholder-box">⚠️ Please fix the errors in n and p above first.</div>`;
+          return;
+        }
+        const n = Number(nVal), p = Number(pVal);
+        const kVal = kBinomialCdfInput.value.trim();
+        const kErr = validateK(kVal, n);
+        if (kErr) {
+          kBinomialCdfError.textContent = kErr;
+          kBinomialCdfInput.style.borderColor = '#f7768e';
+          binomialCdfResult.innerHTML = `<div class="placeholder-box">⚠️ Please enter a valid k value.</div>`;
+          return;
+        }
+        const k = Number(kVal);
+        const cdf = binomialCDF(n, p, k);
+        const comp = 1 - cdf;
+        binomialCdfResult.innerHTML = `
+          <div class="cdf-results">
+            <div class="cdf-card">
+              <div class="result-label">P(X ≤ ${k})</div>
+              <div class="result-value">${cdf.toFixed(8)}</div>
+              <div class="result-meaning">Probability of getting <strong>${k} or fewer</strong> successes.</div>
+            </div>
+            <div class="cdf-card blue">
+              <div class="result-label">P(X &gt; ${k})</div>
+              <div class="result-value">${comp.toFixed(8)}</div>
+              <div class="result-meaning">Probability of getting <strong>more than ${k}</strong> successes.</div>
+            </div>
+          </div>`;
+      }
+      function renderBinomialChart() {
+        const nVal = nInput.value.trim(), pVal = pInput.value.trim();
+        if (validateN(nVal) || validateP(pVal)) {
+          if (binomialChart) { binomialChart.destroy(); binomialChart = null; }
+          return;
+        }
+        const n = Number(nVal), p = Number(pVal), mean = n * p;
+        const labels = [], probs = [];
+        for (let k = 0; k <= n; k++) { labels.push(k); probs.push(binomialPMF(n, p, k)); }
+        const canvas = document.getElementById('pmfChartBinomial');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (binomialChart) binomialChart.destroy();
+        binomialChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'P(X = k)',
+              data: probs,
+              backgroundColor: function(c) {
+                const { ctx, chartArea } = c.chart;
+                if (!chartArea) return 'rgba(125, 207, 255, 0.7)';
+                return makeGradient(ctx, chartArea, 'rgba(122, 162, 247, 0.55)', 'rgba(125, 207, 255, 0.95)');
+              },
+              borderColor: '#7dcfff',
+              borderWidth: 1.2,
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.82,
+              categoryPercentage: 0.9
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { ...commonTooltip, callbacks: {
+                title: (c) => 'X = ' + c[0].label,
+                label: (c) => 'P(X=' + c.label + ') = ' + c.parsed.y.toFixed(8)
+              }}
+            },
+            scales: commonScales('Number of successes (X)', 'Probability P(X)'),
+            animation: { duration: 550, easing: 'easeOutQuart' }
+          },
+          plugins: [meanLinePlugin('meanLineBinomial', mean)]
+        });
+      }
+
+      nInput.value = 20; pInput.value = 0.35;
+      kBinomialInput.value = 7; kBinomialCdfInput.value = 7;
+      updateBinomial(); computeBinomialPMF(); computeBinomialCDF();
+
+      updateBinomialBtn.addEventListener('click', () => {
+        updateBinomial(); computeBinomialPMF(); computeBinomialCDF(); renderBinomialChart();
+      });
+      computeBinomialPmfBtn.addEventListener('click', computeBinomialPMF);
+      computeBinomialCdfBtn.addEventListener('click', computeBinomialCDF);
+      nInput.addEventListener('input', () => { nError.textContent = ''; nInput.style.borderColor = '#2f334d'; });
+      pInput.addEventListener('input', () => { pError.textContent = ''; pInput.style.borderColor = '#2f334d'; });
+      kBinomialInput.addEventListener('input', () => { kBinomialError.textContent = ''; kBinomialInput.style.borderColor = '#2f334d'; });
+      kBinomialCdfInput.addEventListener('input', () => { kBinomialCdfError.textContent = ''; kBinomialCdfInput.style.borderColor = '#2f334d'; });
+      [nInput, pInput].forEach(i => i.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); updateBinomial(); computeBinomialPMF(); computeBinomialCDF(); renderBinomialChart(); }
+      }));
+      kBinomialInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); computeBinomialPMF(); } });
+      kBinomialCdfInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); computeBinomialCDF(); } });
+      let binTO = null;
+      function scheduleBin() {
+        if (binTO) clearTimeout(binTO);
+        binTO = setTimeout(() => {
+          const nV = nInput.value.trim(), pV = pInput.value.trim();
+          if (!validateN(nV) && !validateP(pV)) renderBinomialChart();
+          else if (binomialChart) { binomialChart.destroy(); binomialChart = null; }
+          binTO = null;
+        }, 250);
+      }
+      nInput.addEventListener('input', scheduleBin);
+      pInput.addEventListener('input', scheduleBin);
+
+      // ============ POISSON ============
+      const lambdaInput = document.getElementById('lambdaInput');
+      const xInput = document.getElementById('xInput');
+      const lambdaError = document.getElementById('lambdaError');
+      const xError = document.getElementById('xError');
+      const updatePoissonBtn = document.getElementById('updatePoissonBtn');
+      const poissonDisplayLambda = document.getElementById('poissonDisplayLambda');
+      const poissonDisplayX = document.getElementById('poissonDisplayX');
+      const poissonMean = document.getElementById('poissonMean');
+      const poissonVariance = document.getElementById('poissonVariance');
+      const poissonStdDev = document.getElementById('poissonStdDev');
+      const poissonSecondMoment = document.getElementById('poissonSecondMoment');
+      const poissonSkewness = document.getElementById('poissonSkewness');
+      const xPoissonInput = document.getElementById('xPoissonInput');
+      const xPoissonError = document.getElementById('xPoissonError');
+      const computePoissonPmfBtn = document.getElementById('computePoissonPmfBtn');
+      const poissonPmfResult = document.getElementById('poissonPmfResult');
+      const xPoissonCdfInput = document.getElementById('xPoissonCdfInput');
+      const xPoissonCdfError = document.getElementById('xPoissonCdfError');
+      const computePoissonCdfBtn = document.getElementById('computePoissonCdfBtn');
+      const poissonCdfResult = document.getElementById('poissonCdfResult');
+      let poissonChart = null;
+
+      function validateLambda(v) {
+        const n = Number(v);
+        if (v.trim() === '' || isNaN(n) || n < 0) return 'λ must be a non-negative number (≥ 0).';
+        if (n > 1000) return 'λ must be ≤ 1000 for this lab.';
+        return '';
+      }
+      function validateX(v) {
+        const n = Number(v);
+        if (v.trim() === '' || !Number.isInteger(n) || n < 0) return 'x must be a non-negative integer (0, 1, 2, ...).';
+        if (n > 170) return 'x must be ≤ 170 to avoid numeric overflow.';
+        return '';
+      }
+      function updatePoisson() {
+        lambdaError.textContent = ''; xError.textContent = '';
+        lambdaInput.style.borderColor = '#2f334d'; xInput.style.borderColor = '#2f334d';
+        const lV = lambdaInput.value.trim(), xV = xInput.value.trim();
+        const lE = validateLambda(lV), xE = validateX(xV);
+        let ok = true;
+        if (lE) { lambdaError.textContent = lE; lambdaInput.style.borderColor = '#f7768e'; ok = false; }
+        if (xE) { xError.textContent = xE; xInput.style.borderColor = '#f7768e'; ok = false; }
+        if (ok) {
+          const l = Number(lV), x = Number(xV);
+          poissonDisplayLambda.textContent = l;
+          poissonDisplayX.textContent = x;
+          const mean = l, variance = l, stdDev = Math.sqrt(l);
+          const sm = variance + mean * mean;
+          const sk = 1 / Math.sqrt(l);
+          poissonMean.textContent = formatStat(mean);
+          poissonVariance.textContent = formatStat(variance);
+          poissonStdDev.textContent = formatStat(stdDev);
+          poissonSecondMoment.textContent = formatStat(sm);
+          poissonSkewness.textContent = formatStat(sk);
+        } else {
+          ['poissonDisplayLambda','poissonDisplayX','poissonMean','poissonVariance',
+           'poissonStdDev','poissonSecondMoment','poissonSkewness'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+          });
+        }
+      }
+      function computePoissonPMF() {
+        xPoissonError.textContent = '';
+        xPoissonInput.style.borderColor = '#2f334d';
+        const lV = lambdaInput.value.trim();
+        if (validateLambda(lV)) {
+          poissonPmfResult.innerHTML = `<div class="placeholder-box">⚠️ Please fix the error in λ above first.</div>`;
+          return;
+        }
+        const l = Number(lV);
+        const xV = xPoissonInput.value.trim();
+        const xE = validateX(xV);
+        if (xE) {
+          xPoissonError.textContent = xE;
+          xPoissonInput.style.borderColor = '#f7768e';
+          poissonPmfResult.innerHTML = `<div class="placeholder-box">⚠️ Please enter a valid x value.</div>`;
+          return;
+        }
+        const x = Number(xV);
+        const prob = poissonPMF(l, x);
+        poissonPmfResult.innerHTML = `
+          <div class="result-card">
+            <div class="result-label">P(X = ${x}) for λ = ${l}</div>
+            <div class="result-value">${prob.toFixed(8)}</div>
+            <div class="result-expression">P(X = ${x}) = (e^−${l} · ${l}^${x}) / ${x}!</div>
+            <div class="result-meaning">
+              Probability of observing exactly <strong>${x}</strong> event${x === 1 ? '' : 's'} when the average rate is <strong>${l}</strong>.
+            </div>
+          </div>`;
+      }
+      function computePoissonCDF() {
+        xPoissonCdfError.textContent = '';
+        xPoissonCdfInput.style.borderColor = '#2f334d';
+        const lV = lambdaInput.value.trim();
+        if (validateLambda(lV)) {
+          poissonCdfResult.innerHTML = `<div class="placeholder-box">⚠️ Please fix the error in λ above first.</div>`;
+          return;
+        }
+        const l = Number(lV);
+        const xV = xPoissonCdfInput.value.trim();
+        const xE = validateX(xV);
+        if (xE) {
+          xPoissonCdfError.textContent = xE;
+          xPoissonCdfInput.style.borderColor = '#f7768e';
+          poissonCdfResult.innerHTML = `<div class="placeholder-box">⚠️ Please enter a valid x value.</div>`;
+          return;
+        }
+        const x = Number(xV);
+        const cdf = poissonCDF(l, x);
+        const comp = 1 - cdf;
+        poissonCdfResult.innerHTML = `
+          <div class="cdf-results">
+            <div class="cdf-card">
+              <div class="result-label">P(X ≤ ${x})</div>
+              <div class="result-value">${cdf.toFixed(8)}</div>
+              <div class="result-meaning">Probability of observing <strong>${x} or fewer</strong> events.</div>
+            </div>
+            <div class="cdf-card blue">
+              <div class="result-label">P(X &gt; ${x})</div>
+              <div class="result-value">${comp.toFixed(8)}</div>
+              <div class="result-meaning">Probability of observing <strong>more than ${x}</strong> events.</div>
+            </div>
+          </div>`;
+      }
+      function renderPoissonChart() {
+        const lV = lambdaInput.value.trim();
+        if (validateLambda(lV)) {
+          if (poissonChart) { poissonChart.destroy(); poissonChart = null; }
+          return;
+        }
+        const l = Number(lV), mean = l;
+        let maxX = Math.ceil(mean + 3 * Math.sqrt(mean) + 5);
+        if (maxX > 60) maxX = 60;
+        if (maxX < 10) maxX = 10;
+        const labels = [], probs = [];
+        for (let x = 0; x <= maxX; x++) { labels.push(x); probs.push(poissonPMF(l, x)); }
+        const canvas = document.getElementById('pmfChartPoisson');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (poissonChart) poissonChart.destroy();
+        poissonChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'P(X = x)',
+              data: probs,
+              backgroundColor: function(c) {
+                const { ctx, chartArea } = c.chart;
+                if (!chartArea) return 'rgba(158, 206, 106, 0.7)';
+                return makeGradient(ctx, chartArea, 'rgba(115, 218, 202, 0.5)', 'rgba(158, 206, 106, 0.95)');
+              },
+              borderColor: '#9ece6a',
+              borderWidth: 1.2,
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.82,
+              categoryPercentage: 0.9
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { ...commonTooltip, callbacks: {
+                title: (c) => 'X = ' + c[0].label,
+                label: (c) => 'P(X=' + c.label + ') = ' + c.parsed.y.toFixed(8)
+              }}
+            },
+            scales: commonScales('Number of events (X)', 'Probability P(X)'),
+            animation: { duration: 550, easing: 'easeOutQuart' }
+          },
+          plugins: [meanLinePlugin('meanLinePoisson', mean)]
+        });
+      }
+
+      lambdaInput.value = 5; xInput.value = 2;
+      xPoissonInput.value = 2; xPoissonCdfInput.value = 2;
+      updatePoisson(); computePoissonPMF(); computePoissonCDF();
+      updatePoissonBtn.addEventListener('click', () => {
+        updatePoisson(); computePoissonPMF(); computePoissonCDF(); renderPoissonChart();
+      });
+      computePoissonPmfBtn.addEventListener('click', computePoissonPMF);
+      computePoissonCdfBtn.addEventListener('click', computePoissonCDF);
+      lambdaInput.addEventListener('input', () => { lambdaError.textContent = ''; lambdaInput.style.borderColor = '#2f334d'; });
+      xInput.addEventListener('input', () => { xError.textContent = ''; xInput.style.borderColor = '#2f334d'; });
+      xPoissonInput.addEventListener('input', () => { xPoissonError.textContent = ''; xPoissonInput.style.borderColor = '#2f334d'; });
+      xPoissonCdfInput.addEventListener('input', () => { xPoissonCdfError.textContent = ''; xPoissonCdfInput.style.borderColor = '#2f334d'; });
+      [lambdaInput, xInput].forEach(i => i.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); updatePoisson(); computePoissonPMF(); computePoissonCDF(); renderPoissonChart(); }
+      }));
+      xPoissonInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); computePoissonPMF(); } });
+      xPoissonCdfInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); computePoissonCDF(); } });
+      let poiTO = null;
+      function schedulePoi() {
+        if (poiTO) clearTimeout(poiTO);
+        poiTO = setTimeout(() => {
+          const lV = lambdaInput.value.trim();
+          if (!validateLambda(lV)) renderPoissonChart();
+          else if (poissonChart) { poissonChart.destroy(); poissonChart = null; }
+          poiTO = null;
+        }, 250);
+      }
+      lambdaInput.addEventListener('input', schedulePoi);
+
+      // ============ GEOMETRIC ============
+      const pGeometricInput = document.getElementById('pGeometricInput');
+      const pGeometricError = document.getElementById('pGeometricError');
+      const updateGeometricBtn = document.getElementById('updateGeometricBtn');
+      const geometricDisplayP = document.getElementById('geometricDisplayP');
+      const geometricMean = document.getElementById('geometricMean');
+      const geometricVariance = document.getElementById('geometricVariance');
+      const geometricStdDev = document.getElementById('geometricStdDev');
+      const geometricSecondMoment = document.getElementById('geometricSecondMoment');
+      const geometricSkewness = document.getElementById('geometricSkewness');
+      const kGeometricInput = document.getElementById('kGeometricInput');
+      const kGeometricError = document.getElementById('kGeometricError');
+      const computeGeometricPmfBtn = document.getElementById('computeGeometricPmfBtn');
+      const geometricPmfResult = document.getElementById('geometricPmfResult');
+      const kGeometricCdfInput = document.getElementById('kGeometricCdfInput');
+      const kGeometricCdfError = document.getElementById('kGeometricCdfError');
+      const computeGeometricCdfBtn = document.getElementById('computeGeometricCdfBtn');
+      const geometricCdfResult = document.getElementById('geometricCdfResult');
+      let geometricChart = null;
+
+      function validatePGeometric(v) {
+        const n = Number(v);
+        if (v.trim() === '' || isNaN(n)) return 'p must be a number.';
+        if (n <= 0 || n > 1) return 'p must be greater than 0 and at most 1.';
+        return '';
+      }
+      function validateKGeometric(v) {
+        const n = Number(v);
+        if (v.trim() === '' || !Number.isInteger(n) || n < 1) return 'k must be a positive integer (k ≥ 1).';
+        return '';
+      }
+      function updateGeometric() {
+        pGeometricError.textContent = '';
+        pGeometricInput.style.borderColor = '#2f334d';
+        const pV = pGeometricInput.value.trim();
+        const pE = validatePGeometric(pV);
+        if (pE) {
+          pGeometricError.textContent = pE;
+          pGeometricInput.style.borderColor = '#f7768e';
+          ['geometricDisplayP','geometricMean','geometricVariance','geometricStdDev',
+           'geometricSecondMoment','geometricSkewness'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+          });
+        } else {
+          const p = Number(pV);
+          geometricDisplayP.textContent = p.toFixed(2).replace(/\.?0+$/, '');
+          const mean = 1 / p;
+          const variance = (1 - p) / (p * p);
+          const stdDev = Math.sqrt(variance);
+          const sm = variance + mean * mean;
+          const sk = (2 - p) / Math.sqrt(1 - p);
+          geometricMean.textContent = formatStat(mean);
+          geometricVariance.textContent = formatStat(variance);
+          geometricStdDev.textContent = formatStat(stdDev);
+          geometricSecondMoment.textContent = formatStat(sm);
+          geometricSkewness.textContent = formatStat(sk);
+        }
+      }
+      function computeGeometricPMF() {
+        kGeometricError.textContent = '';
+        kGeometricInput.style.borderColor = '#2f334d';
+        const pV = pGeometricInput.value.trim();
+        if (validatePGeometric(pV)) {
+          geometricPmfResult.innerHTML = `<div class="placeholder-box">⚠️ Please fix the error in p above first.</div>`;
+          return;
+        }
+        const p = Number(pV);
+        const kV = kGeometricInput.value.trim();
+        const kE = validateKGeometric(kV);
+        if (kE) {
+          kGeometricError.textContent = kE;
+          kGeometricInput.style.borderColor = '#f7768e';
+          geometricPmfResult.innerHTML = `<div class="placeholder-box">⚠️ Please enter a valid k value.</div>`;
+          return;
+        }
+        const k = Number(kV);
+        const prob = Math.pow(1 - p, k - 1) * p;
+        geometricPmfResult.innerHTML = `
+          <div class="result-card">
+            <div class="result-label">P(X = ${k}) for p = ${p}</div>
+            <div class="result-value">${prob.toFixed(8)}</div>
+            <div class="result-expression">P(X = ${k}) = (1−${p})^(${k}−1) · ${p}</div>
+            <div class="result-meaning">
+              Probability that the first success occurs on the <strong>${k}</strong>th trial.
+            </div>
+          </div>`;
+      }
+      function computeGeometricCDF() {
+        kGeometricCdfError.textContent = '';
+        kGeometricCdfInput.style.borderColor = '#2f334d';
+        const pV = pGeometricInput.value.trim();
+        if (validatePGeometric(pV)) {
+          geometricCdfResult.innerHTML = `<div class="placeholder-box">⚠️ Please fix the error in p above first.</div>`;
+          return;
+        }
+        const p = Number(pV);
+        const kV = kGeometricCdfInput.value.trim();
+        const kE = validateKGeometric(kV);
+        if (kE) {
+          kGeometricCdfError.textContent = kE;
+          kGeometricCdfInput.style.borderColor = '#f7768e';
+          geometricCdfResult.innerHTML = `<div class="placeholder-box">⚠️ Please enter a valid k value.</div>`;
+          return;
+        }
+        const k = Number(kV);
+        const cdf = 1 - Math.pow(1 - p, k);
+        const comp = Math.pow(1 - p, k);
+        geometricCdfResult.innerHTML = `
+          <div class="cdf-results">
+            <div class="cdf-card">
+              <div class="result-label">P(X ≤ ${k})</div>
+              <div class="result-value">${cdf.toFixed(8)}</div>
+              <div class="result-meaning">Probability that the first success happens on or before the <strong>${k}</strong>th trial.</div>
+            </div>
+            <div class="cdf-card blue">
+              <div class="result-label">P(X &gt; ${k})</div>
+              <div class="result-value">${comp.toFixed(8)}</div>
+              <div class="result-meaning">Probability that the first success happens after the <strong>${k}</strong>th trial.</div>
+            </div>
+          </div>`;
+      }
+      function renderGeometricChart() {
+        const pV = pGeometricInput.value.trim();
+        if (validatePGeometric(pV)) {
+          if (geometricChart) { geometricChart.destroy(); geometricChart = null; }
+          return;
+        }
+        const p = Number(pV);
+        const mean = 1 / p;
+        const variance = (1 - p) / (p * p);
+        let maxX = Math.ceil(mean + 4 * Math.sqrt(variance) + 5);
+        if (maxX > 50) maxX = 50;
+        if (maxX < 10) maxX = 10;
+        const labels = [], probs = [];
+        for (let x = 1; x <= maxX; x++) { labels.push(x); probs.push(Math.pow(1 - p, x - 1) * p); }
+        const canvas = document.getElementById('pmfChartGeometric');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (geometricChart) geometricChart.destroy();
+        geometricChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'P(X = x)',
+              data: probs,
+              backgroundColor: function(c) {
+                const { ctx, chartArea } = c.chart;
+                if (!chartArea) return 'rgba(187, 154, 247, 0.7)';
+                return makeGradient(ctx, chartArea, 'rgba(255, 0, 124, 0.4)', 'rgba(187, 154, 247, 0.95)');
+              },
+              borderColor: '#bb9af7',
+              borderWidth: 1.2,
+              borderRadius: 6,
+              borderSkipped: false,
+              barPercentage: 0.82,
+              categoryPercentage: 0.9
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { ...commonTooltip, callbacks: {
+                title: (c) => 'X = ' + c[0].label,
+                label: (c) => 'P(X=' + c.label + ') = ' + c.parsed.y.toFixed(8)
+              }}
+            },
+            scales: commonScales('Trial number (X)', 'Probability P(X)'),
+            animation: { duration: 550, easing: 'easeOutQuart' }
+          },
+          plugins: [meanLinePlugin('meanLineGeometric', mean)]
+        });
+      }
+
+      pGeometricInput.value = 0.35;
+      kGeometricInput.value = 3; kGeometricCdfInput.value = 3;
+      updateGeometric(); computeGeometricPMF(); computeGeometricCDF();
+      updateGeometricBtn.addEventListener('click', () => {
+        updateGeometric(); computeGeometricPMF(); computeGeometricCDF(); renderGeometricChart();
+      });
+      computeGeometricPmfBtn.addEventListener('click', computeGeometricPMF);
+      computeGeometricCdfBtn.addEventListener('click', computeGeometricCDF);
+      pGeometricInput.addEventListener('input', () => { pGeometricError.textContent = ''; pGeometricInput.style.borderColor = '#2f334d'; });
+      kGeometricInput.addEventListener('input', () => { kGeometricError.textContent = ''; kGeometricInput.style.borderColor = '#2f334d'; });
+      kGeometricCdfInput.addEventListener('input', () => { kGeometricCdfError.textContent = ''; kGeometricCdfInput.style.borderColor = '#2f334d'; });
+      pGeometricInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); updateGeometric(); computeGeometricPMF(); computeGeometricCDF(); renderGeometricChart(); }
+      });
+      kGeometricInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); computeGeometricPMF(); } });
+      kGeometricCdfInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); computeGeometricCDF(); } });
+      let geoTO = null;
+      function scheduleGeo() {
+        if (geoTO) clearTimeout(geoTO);
+        geoTO = setTimeout(() => {
+          const pV = pGeometricInput.value.trim();
+          if (!validatePGeometric(pV)) renderGeometricChart();
+          else if (geometricChart) { geometricChart.destroy(); geometricChart = null; }
+          geoTO = null;
+        }, 250);
+      }
+      pGeometricInput.addEventListener('input', scheduleGeo);
+
+      setTimeout(() => {
+        renderBinomialChart();
+        renderPoissonChart();
+        renderGeometricChart();
+      }, 100);
+    })();
+  </script>
+</body>
+</html>
