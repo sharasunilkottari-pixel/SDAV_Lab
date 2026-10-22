@@ -31,5 +31,9 @@ On comparing Binomial(100,0.05) and Poisson(5) for 100 inspections:
 <img width="722" height="160" alt="image" src="https://github.com/user-attachments/assets/d87a1846-7ddf-4330-9f9c-a65f994ce0d9" />
 
 #### 7. Open the Geometric module and enter p = 0.05. Examine the probability of detecting the first defect on different inspection attempts.
+<img width="1392" height="832" alt="image" src="https://github.com/user-attachments/assets/6c2091e8-16f6-4fa0-9409-971c461aeb4a" />
+<img width="1382" height="532" alt="image" src="https://github.com/user-attachments/assets/9a98db55-39d2-47c2-b5a7-72cf7bd884bf" />
+Table with probability values:
+<img width="722" height="315" alt="image" src="https://github.com/user-attachments/assets/d3cd9345-c679-432e-9add-d69f7ce947a3" />
 
 #### 8. Write down the numerical results, graph observations, and an inference about the quality-control process.
