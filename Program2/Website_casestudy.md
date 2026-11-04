@@ -3,7 +3,7 @@
 ### CASE 1:Manufacturing quality control - Analyze defective products on a production line. 
 
 #### 1. Open the Binomial module in your Web application.
-[Visit the Website](https://sharasunilkottari-pixel.github.io/SDAV_Lab/)\
+[Visit the Website](https://sharasunilkottari-pixel.github.io/SDAV_Lab/Program2/)\
 On opening the web application the following screen for binomial distributions pops up.
 <img width="1390" height="820" alt="image" src="https://github.com/user-attachments/assets/856c2719-4d54-4de0-aca5-82b9a0069d5f" />
 
